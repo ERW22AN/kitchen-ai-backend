@@ -1,8 +1,6 @@
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
+import OpenAI, { toFile } from "openai";
 
 const app = express();
 
@@ -26,12 +24,17 @@ app.post("/generate-3d", async (req, res) => {
     const base64Data = planImage.replace(/^data:image\/\w+;base64,/, "");
     const imageBuffer = Buffer.from(base64Data, "base64");
 
-    const imagePath = path.join("/tmp", "plan-cuisine.jpg");
-    fs.writeFileSync(imagePath, imageBuffer);
+    const imageFile = await toFile(
+      imageBuffer,
+      "plan-cuisine.png",
+      {
+        type: "image/png"
+      }
+    );
 
     const result = await openai.images.edit({
       model: "gpt-image-1",
-      image: fs.createReadStream(imagePath),
+      image: imageFile,
       prompt: prompt,
       size: "1024x1024"
     });

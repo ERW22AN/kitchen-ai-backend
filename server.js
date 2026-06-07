@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 
@@ -15,9 +17,22 @@ app.post("/generate-3d", async (req, res) => {
   try {
     const { prompt, planImage } = req.body;
 
-    const result = await openai.images.generate({
+    if (!planImage) {
+      return res.status(400).json({
+        error: "Image du plan manquante."
+      });
+    }
+
+    const base64Data = planImage.replace(/^data:image\/\w+;base64,/, "");
+    const imageBuffer = Buffer.from(base64Data, "base64");
+
+    const imagePath = path.join("/tmp", "plan-cuisine.jpg");
+    fs.writeFileSync(imagePath, imageBuffer);
+
+    const result = await openai.images.edit({
       model: "gpt-image-1",
-      prompt,
+      image: fs.createReadStream(imagePath),
+      prompt: prompt,
       size: "1024x1024"
     });
 
@@ -26,6 +41,7 @@ app.post("/generate-3d", async (req, res) => {
     });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       error: error.message
     });

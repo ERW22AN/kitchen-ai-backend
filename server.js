@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 app.post("/generate-3d", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { prompt, planImage } = req.body;
 
     const result = await openai.images.generate({
       model: "gpt-image-1",
